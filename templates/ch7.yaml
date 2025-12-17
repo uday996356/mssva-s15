@@ -1,0 +1,50 @@
+id: ch7-security-absence
+
+info:
+  name: Missing Security Controls Detection
+  author: security-researcher
+  severity: medium
+  description: Detects absence of security headers or authentication mechanisms
+  tags: misconfiguration,headers,authentication
+
+http:
+  - raw:
+      - |
+        GET /admin HTTP/1.1
+        Host: {{Hostname}}
+        
+      - |
+        GET /api/sensitive HTTP/1.1
+        Host: {{Hostname}}
+        
+      - |
+        OPTIONS / HTTP/1.1
+        Host: {{Hostname}}
+
+    matchers-condition: or
+    matchers:
+      - type: dsl
+        dsl:
+          - "!contains(tolower(header), 'x-frame-options')"
+          - "!contains(tolower(header), 'x-content-type-options')"
+          - "!contains(tolower(header), 'strict-transport-security')"
+        condition: or
+
+      - type: word
+        part: body_1
+        words:
+          - "admin"
+          - "dashboard"
+          - "users"
+        condition: and
+
+      - type: word
+        part: body_2
+        words:
+          - "data"
+          - "records"
+        condition: and
+
+      - type: status
+        status:
+          - 200

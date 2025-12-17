@@ -1,0 +1,34 @@
+id: ch6-state-desync
+
+info:
+  name: State Desynchronization Logic Flaw
+  author: security-researcher
+  severity: medium
+  description: Application allows committing without advancing state, revealing extended data due to improper state validation
+  tags: logic,state,business-logic
+
+http:
+  - raw:
+      - |
+        GET /init HTTP/1.1
+        Host: {{Hostname}}
+        
+      - |
+        GET /commit HTTP/1.1
+        Host: {{Hostname}}
+
+    cookie-reuse: true
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body_2
+        words:
+          - "extended"
+          - "mode"
+          - "ops"
+        condition: and
+
+      - type: status
+        status:
+          - 200

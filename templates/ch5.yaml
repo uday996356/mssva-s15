@@ -1,0 +1,50 @@
+id: ch5-session-fixation
+
+info:
+  name: Session Management Vulnerability
+  author: security-researcher
+  severity: high
+  description: Detects session fixation or weak session management issues
+  tags: session,fixation,authentication
+
+http:
+  - raw:
+      - |
+        GET /login HTTP/1.1
+        Host: {{Hostname}}
+        Cookie: PHPSESSID=attacker-controlled-session
+        
+      - |
+        POST /login HTTP/1.1
+        Host: {{Hostname}}
+        Cookie: session_id=fixed-value
+        Content-Type: application/x-www-form-urlencoded
+        
+        username=admin&password=admin
+
+      - |
+        GET /dashboard HTTP/1.1
+        Host: {{Hostname}}
+        Cookie: session_id=fixed-value
+
+    cookie-reuse: true
+
+    matchers-condition: or
+    matchers:
+      - type: word
+        part: header
+        words:
+          - "Set-Cookie"
+        negative: true
+
+      - type: word
+        part: body_3
+        words:
+          - "dashboard"
+          - "welcome"
+          - "logged in"
+        condition: or
+
+      - type: status
+        status:
+          - 200

