@@ -1,0 +1,44 @@
+id: ch4-ssrf-detection
+
+info:
+  name: Server-Side Request Forgery Detection
+  author: security-researcher
+  severity: high
+  description: Detects SSRF vulnerability allowing internal network access and arbitrary URL fetching
+  tags: ssrf,network,remote
+
+http:
+  - raw:
+      - |
+        GET /fetch?url=http://example.com HTTP/1.1
+        Host: {{Hostname}}
+        
+      - |
+        GET /fetch?url=http://127.0.0.1 HTTP/1.1
+        Host: {{Hostname}}
+
+    matchers-condition: or
+    matchers:
+      - type: word
+        part: body_1
+        words:
+          - "Example Domain"
+          - "<html"
+        condition: or
+
+      - type: word
+        part: body_2
+        words:
+          - "<html"
+          - "<!doctype"
+        condition: or
+
+      - type: status
+        status:
+          - 200
+
+    extractors:
+      - type: regex
+        part: body
+        regex:
+          - "<title>(.*?)</title>"
